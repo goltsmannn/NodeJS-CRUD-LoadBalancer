@@ -11,12 +11,13 @@ const handler = new Handler<User>(db);
 const router: Router<User> = new Router<User>(handler);
 
 
-http.createServer((request, response)=> {
+http.createServer((request: http.IncomingMessage, response: http.ServerResponse)=> {
+    router.handleRequest(request, response);
+
     request.on('error', (err:Error) => {
         response.writeHead(404, {"Content-type": "text/plain"});
         response.end(err.message);
     });
-    router.handleRequest(request, response);
 })
     .listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

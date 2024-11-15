@@ -10,8 +10,10 @@ export default class Router <Type> {
     }
 
     public handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
-        let data: string = '';
-        req.on('data', (chunk: Buffer) => {data += chunk.toString();});
+        let data = '';
+        req.on('data', (chunk: Buffer) => {
+            data += chunk;
+        });
         req.on('end', () => {
             try {
                 this.redirectRequest(req, res, data ? JSON.parse(data) : {});
@@ -22,14 +24,19 @@ export default class Router <Type> {
     }
 
     public redirectRequest(req: http.IncomingMessage, res: http.ServerResponse, data: object) {
-        const url = req.url? <String[]>req.url.split('/') : [];
+        const url = req.url? <String[]>req.url.split('/').slice(1) : [];
+
         if(req.method === 'POST') {
-            const params = <String[]>url[1].replace('?', '').split('&');
-            if (params.length !== 3) {
+            if (url.length === 2 && url[0] === 'api' && url[1] === 'users') {
+                this.handler.handlePostRequest(req, res, data);
+            } else {
                 res.writeHead(400);
                 res.write("Request doesn't contain required fields");
-            } else {
-                this.handler.handlePostRequest(req, res, data, params);
+                res.end();
+            }
+        } else if (req.method === 'GET') {
+            if(url.length === 2 && url[0] === 'api' && url[1] === 'users') {
+                this.handler.handleGetAllRequest(req, res);
             }
         }
     }

@@ -1,4 +1,5 @@
 import {v4 as uuid, validate} from "uuid";
+import User from "./User";
 //import {} from "../Errors/getErrors";
 
 
@@ -6,9 +7,15 @@ export type UUID = string;
 export type statusCodes = 200 | 201 | 204 | 400 | 404
 
 export class DatabaseError extends Error {
-    private code: statusCodes;
+    static get errors(): { [key in statusCodes]: string } {
+        return this._errors;
+    }
+    get code(): statusCodes {
+        return this._code;
+    }
+    private _code: statusCodes;
 
-    public static errors: {[key in statusCodes] : string } = {
+    private static _errors: {[key in statusCodes] : string } = {
         200: "Successfully retrieved data",
         201: "Successfully created entry",
         204: "Successfully deleted data",
@@ -16,9 +23,9 @@ export class DatabaseError extends Error {
         404: "Data not found"
     }
 
-    constructor(code: statusCodes, message: string = DatabaseError.errors[code]) {
+    constructor(code: statusCodes, message: string = DatabaseError._errors[code]) {
         super(message);
-        this.code = code;
+        this._code = code;
     }
 }
 
@@ -28,6 +35,16 @@ export default class Database <Type> {
 
     constructor(data?:{ [key: UUID] : Type}) {
         this.data = data || {};
+    }
+
+    private fieldValidator(entry: Type) {
+        if (!Object.keys(this.data).every((key: UUID) => this.data[key])
+            || typeof (entry as User)['username'] !== "string"
+            || typeof (entry as User)['age'] !== "number"
+            || (entry as User)['hobbies'].every((hobby) => typeof hobby !== "string")
+        ) {
+            throw new DatabaseError(400);
+        }
     }
 
     public read(entryId: UUID) {
@@ -47,18 +64,18 @@ export default class Database <Type> {
     }
 
     public create(entry: Type) {
-        if(!Object.keys(this.data).every((key: UUID) => this.data[key])) {
-            throw new DatabaseError(400);
-        };
+        try{
+            this.fieldValidator(entry);
+        } catch (err) {
+            throw err;
+        }
         let id: UUID = uuid();
         this.data[id] = entry;
         return {status: 201, message: id}; // 201
     }
 
     public update(entryId: UUID, entry: Type)  {
-        if(!validate(entryId)) {
-            throw new DatabaseError(400);
-        }
+
         if(!this.read(entryId)) {
             throw new DatabaseError(404);
         }
