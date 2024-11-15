@@ -1,0 +1,22 @@
+{
+  "name": "crud_node_js",
+  "version": "1.0.0",
+  "description": "CRUD API with load balancer for RSSchool",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "nodemon src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mark Goltsman",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "uuid": "^11.0.3"
+  }
+}
