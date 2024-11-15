@@ -20,7 +20,7 @@ export default class Handler <Type>{
     private writeError(error: unknown, res: http.ServerResponse) {
         if (error instanceof DatabaseError) {
             res.writeHead(error.code);
-            res.write(DatabaseError.errors[error.code]);
+            res.write(DatabaseError.statusCodes[error.code]);
             res.end();
         }
         console.error(error);
@@ -46,5 +46,32 @@ export default class Handler <Type>{
         }
     }
 
+    public handleGetUserRequest(req: http.IncomingMessage, res: http.ServerResponse, userId: UUID) {
+        try {
+            const response: {status: number, message: Type} = this.database.read(userId);
+            this.writeResponse(response, 200, res)
+        } catch (error: unknown) {
+            this.writeError(error, res);
+        }
+    }
+
+    public handleDeleteUserRequest(req: http.IncomingMessage, res: http.ServerResponse, userID: UUID) {
+        try {
+            const response: {status: number, message: string} = this.database.delete(userID);
+            this.writeResponse(response, 204, res)
+        } catch (error: unknown) {
+            this.writeError(error, res);
+        }
+    }
+
+    public handlePutUserRequest(req: http.IncomingMessage, res: http.ServerResponse, userId: UUID, data: object) {
+        try {
+            const user = <Type>(data);
+            const response: {status: number, message: Type} = this.database.update(userId, user);
+            this.writeResponse(response, 200, res)
+        } catch (error: unknown) {
+            this.writeError(error, res);
+        }
+    }
 
 }

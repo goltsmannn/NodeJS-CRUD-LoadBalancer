@@ -7,15 +7,15 @@ export type UUID = string;
 export type statusCodes = 200 | 201 | 204 | 400 | 404
 
 export class DatabaseError extends Error {
-    static get errors(): { [key in statusCodes]: string } {
-        return this._errors;
+    static get statusCodes(): { [key in statusCodes]: string } {
+        return this._statusCodes;
     }
     get code(): statusCodes {
         return this._code;
     }
     private _code: statusCodes;
 
-    private static _errors: {[key in statusCodes] : string } = {
+    private static _statusCodes: {[key in statusCodes] : string } = {
         200: "Successfully retrieved data",
         201: "Successfully created entry",
         204: "Successfully deleted data",
@@ -23,7 +23,7 @@ export class DatabaseError extends Error {
         404: "Data not found"
     }
 
-    constructor(code: statusCodes, message: string = DatabaseError._errors[code]) {
+    constructor(code: statusCodes, message: string = DatabaseError._statusCodes[code]) {
         super(message);
         this._code = code;
     }
@@ -75,12 +75,17 @@ export default class Database <Type> {
     }
 
     public update(entryId: UUID, entry: Type)  {
-
-        if(!this.read(entryId)) {
-            throw new DatabaseError(404);
+        try{
+            this.fieldValidator(entry);
+            if(!this.read(entryId)) {
+                throw new DatabaseError(404);
+            }
+            this.data[entryId] = entry;
+            return {status: 200, message: this.data[entryId]};
+        } catch(e) {
+            throw e;
         }
-        this.data[entryId] = entry;
-        return {status: 200, message: this.data[entryId]};
+
     }
 
     public delete(entryId: UUID) {
@@ -88,9 +93,9 @@ export default class Database <Type> {
             throw new DatabaseError(400);
         }
         if(!this.read(entryId)) {
-            throw new DatabaseError(400);
+            throw new DatabaseError(404);
         }
         delete this.data[entryId];
-        return {status: 204, message: DatabaseError.errors[204]}; // 204
+        return {status: 204, message: DatabaseError.statusCodes[204]}; // 204
     }
 }
