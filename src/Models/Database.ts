@@ -13,13 +13,13 @@ export default class Database <Type> {
 
     public read(entryId: UUID) {
         if (!validate(entryId)) {
-            return false; // 400
+            console.log(400); // 400
         }
         try {
             let entry: Type = this.data[entryId];
             return entry;
         } catch (e) {
-            return false; // 404
+            console.log(e); // 404
         }
     }
 
@@ -29,7 +29,7 @@ export default class Database <Type> {
 
     public create(entry: Type) {
         if(!Object.keys(this.data).every((key: UUID) => this.data[key])) {
-            return false; // 400
+            return "-1"; // 400
         };
         let id: UUID = uuid();
         this.data[id] = entry;

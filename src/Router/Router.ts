@@ -3,11 +3,9 @@ import * as http from "node:http";
 import Handler from "../Handler/Handler";
 
 export default class Router <Type> {
-    private database: Database<Type>;
-    private handler: Handler;
+    private handler: Handler<Type>;
 
-    constructor(database: Database<Type>, handler: Handler) {
-        this.database = database;
+    constructor(handler: Handler<Type>) {
         this.handler = handler;
     }
 
@@ -15,7 +13,6 @@ export default class Router <Type> {
         let data: string = '';
         req.on('data', (chunk: Buffer) => {data += chunk.toString();});
         req.on('end', () => {
-            console.log(data);
             try {
                 this.redirectRequest(req, res, data ? JSON.parse(data) : {});
             } catch (e) {
@@ -25,10 +22,15 @@ export default class Router <Type> {
     }
 
     public redirectRequest(req: http.IncomingMessage, res: http.ServerResponse, data: object) {
-        if(request.method === 'POST') {
-            this.
-        }
         const url = req.url? <String[]>req.url.split('/') : [];
-        console.log(url);
+        if(req.method === 'POST') {
+            const params = <String[]>url[1].replace('?', '').split('&');
+            if (params.length !== 3) {
+                res.writeHead(400);
+                res.write("Request doesn't contain required fields");
+            } else {
+                this.handler.handlePostRequest(req, res, data, params);
+            }
+        }
     }
 }
