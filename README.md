@@ -23,4 +23,9 @@ npm install
 npm run dev
 ```
 
+## Running multi-instance application with node-balancer and Round-Robin distribution:
+```bash
+npm run start:multi
+```
+
 Enjoy!
