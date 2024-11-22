@@ -1,5 +1,5 @@
 import {v4 as uuid, validate} from "uuid";
-import User from "./User";
+import User, { hasId } from "./User";
 import {updateInitiationMessage} from "./Cluster.interfaces";
 //import {} from "../Errors/getErrors";
 
@@ -31,7 +31,7 @@ export class DatabaseError extends Error {
 }
 
 
-export default class Database <Type> {
+export default class Database <Type extends hasId> {
     protected data: { [key: UUID]: Type };
 
     constructor(data?:{ [key: UUID] : Type}) {
@@ -40,9 +40,9 @@ export default class Database <Type> {
 
     private fieldValidator(entry: Type) {
         if (!Object.keys(this.data).every((key: UUID) => this.data[key])
-            || typeof (entry as User)['username'] !== "string"
-            || typeof (entry as User)['age'] !== "number"
-            || (entry as User)['hobbies'].every((hobby) => typeof hobby !== "string")
+            || typeof (entry as any)['username'] !== "string"
+            || typeof (entry as any)['age'] !== "number"
+            || (entry as any)['hobbies'].every((hobby: string) => typeof hobby !== "string")
         ) {
             throw new DatabaseError(400);
         }
@@ -70,10 +70,12 @@ export default class Database <Type> {
         } catch (err) {
             throw err;
         }
-        let id: UUID = uuid();
+        let id: UUID = entry.id || uuid();
+        entry.id = id;
+
         this.data[id] = entry;
-        const data: updateInitiationMessage<User> = {
-            key: id, type: "POST", entry: entry as User
+        const data: updateInitiationMessage<Type> = {
+            key: id, type: "POST", entry: entry
         }
         return {status: 201, message: id, data: data}; // 201
     }
@@ -85,8 +87,8 @@ export default class Database <Type> {
                 throw new DatabaseError(404);
             }
             this.data[entryId] = entry;
-            const data: updateInitiationMessage<User> = {
-                key: entryId, type: "PUT", entry: entry as User
+            const data: updateInitiationMessage<Type> = {
+                key: entryId, type: "PUT", entry: entry
             }
             return {status: 200, message: this.data[entryId], data: data };
         } catch(e) {
@@ -102,8 +104,8 @@ export default class Database <Type> {
         if(!this.read(entryId)) {
             throw new DatabaseError(404);
         }
-        const data: updateInitiationMessage<User> = {
-            key: entryId, type: "DELETE", entry: this.data[entryId] as User
+        const data: updateInitiationMessage<Type> = {
+            key: entryId, type: "DELETE", entry: this.data[entryId]
         }
         delete this.data[entryId];
 

@@ -1,8 +1,9 @@
 import Database from "../Models/Database";
 import * as http from "node:http";
 import Handler from "../Handler/Handler";
+import {hasId} from "../Models/User";
 
-export default class Router <Type> {
+export default class Router <Type extends hasId> {
     private handler: Handler<Type>;
 
     constructor(handler: Handler<Type>) {
