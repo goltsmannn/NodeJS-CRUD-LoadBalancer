@@ -6,7 +6,7 @@ import Database from "./Models/Database";
 import User from "./Models/User";
 import Handler from "./Handler/Handler";
 import Router from "./Router/Router";
-import {RequestMessage, ResponseMessage} from "./Models/Cluster.interfaces";
+import {RequestMessage, updateInitiationMessage} from "./Models/Cluster.interfaces";
 
 const PORT = Number(process.env.PORT) || 3000;
 const db: Database<User> = new Database<User>();
@@ -19,9 +19,26 @@ if (cluster.isPrimary) {
     const CPUNum = os.availableParallelism();
     for (let i = 1; i <= CPUNum;  i++) {
         const worker = cluster.fork();
-    }
-    let currentPort = PORT + 1;
+        worker.on('message', ( message: updateInitiationMessage<User>) => {
+            console.log("Received db update initiation")
 
+            if (message.type === 'POST') {
+                db.create(message.entry);
+            } else if (message.type === 'DELETE') {
+                db.delete(message.key);
+            } else if(message.type === 'PUT') {
+                db.update(message.key, message.entry);
+            }
+            for(const id in cluster.workers) {
+                if(i!==Number(id)) {
+                    console.log(`Propagating to worker ${id}`)
+                    cluster.workers[id]?.send({key: message.key, entry: message.entry, type: message.type});
+                }
+            }
+        });
+    }
+
+    let currentPort = PORT + 1;
 
     const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
      //   console.log(req.url);
@@ -55,10 +72,21 @@ if (cluster.isPrimary) {
     });
 
 } else  {
-    const server = http.createServer((req, res) => {
-        console.log(req.url);
+    process.on('message', (message: updateInitiationMessage<User>) => {
+        console.log(message);
+        if (message.type === 'POST') {
+            db.create(message.entry);
+        } else if (message.type === 'DELETE') {
+            db.delete(message.key);
+        } else if(message.type === 'PUT') {
+            db.update(message.key, message.entry);
+        }
+    })
+    const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+
         router.handleRequest(req, res);
-        console.log(`Received request on worker at port ${PORT + cluster.worker!.id}`);
+
+
         req.on('error', (err:Error) => {
             res.writeHead(404, {"Content-type": "text/plain"});
             res.end(err.message);

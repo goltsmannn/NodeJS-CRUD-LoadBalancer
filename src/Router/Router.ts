@@ -12,7 +12,7 @@ export default class Router <Type> {
     public handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
         let data = '';
         req.on('data', (chunk: Buffer) => {
-            data += chunk;
+                data += chunk;
         });
         req.on('end', () => {
             try {

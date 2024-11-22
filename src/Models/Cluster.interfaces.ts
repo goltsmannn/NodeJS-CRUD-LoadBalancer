@@ -8,3 +8,8 @@ export interface RequestMessage {
     headers: http.IncomingHttpHeaders;
 }
 
+export interface updateInitiationMessage <Type>{
+    key: string;
+    entry: Type;
+    type: string;
+}

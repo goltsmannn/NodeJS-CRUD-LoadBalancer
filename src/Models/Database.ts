@@ -1,5 +1,6 @@
 import {v4 as uuid, validate} from "uuid";
 import User from "./User";
+import {updateInitiationMessage} from "./Cluster.interfaces";
 //import {} from "../Errors/getErrors";
 
 
@@ -71,7 +72,10 @@ export default class Database <Type> {
         }
         let id: UUID = uuid();
         this.data[id] = entry;
-        return {status: 201, message: id}; // 201
+        const data: updateInitiationMessage<User> = {
+            key: id, type: "POST", entry: entry as User
+        }
+        return {status: 201, message: id, data: data}; // 201
     }
 
     public update(entryId: UUID, entry: Type)  {
@@ -81,7 +85,10 @@ export default class Database <Type> {
                 throw new DatabaseError(404);
             }
             this.data[entryId] = entry;
-            return {status: 200, message: this.data[entryId]};
+            const data: updateInitiationMessage<User> = {
+                key: entryId, type: "PUT", entry: entry as User
+            }
+            return {status: 200, message: this.data[entryId], data: data };
         } catch(e) {
             throw e;
         }
@@ -95,7 +102,11 @@ export default class Database <Type> {
         if(!this.read(entryId)) {
             throw new DatabaseError(404);
         }
+        const data: updateInitiationMessage<User> = {
+            key: entryId, type: "DELETE", entry: this.data[entryId] as User
+        }
         delete this.data[entryId];
-        return {status: 204, message: DatabaseError.statusCodes[204]}; // 204
+
+        return {status: 204, message: DatabaseError.statusCodes[204], data: data}; // 204
     }
 }
